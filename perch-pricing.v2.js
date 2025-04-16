@@ -1,5 +1,5 @@
-// SCRIPT VERSION 2.2 // 
-// LAST UDPATE 3rd of July 2024 //
+// SCRIPT VERSION 2.3 // 
+// LAST UDPATE 12th of April 2025 //
 
 "use strict";
 
@@ -107,7 +107,8 @@
   const emailSource = getElement(section1, select("email-source"));
   const emailTarget = getElement(section2, select("email-target"));
   const pricingQuoteTabs = getElement(section2, select("pricing-quote-tabs"));
-  const tabMenu = pricingQuoteTabs.querySelector(".w-tab-menu");
+  // Removed tab menu reference as we no longer use tabs
+  // const tabMenu = pricingQuoteTabs.querySelector(".w-tab-menu");
   const cashUpfrontCost = section2.querySelector(select("cash-upfront-cost"));
   const cashRecurringAnnualCost = section2.querySelector(
     select("cash-recurring-annual-cost")
@@ -282,7 +283,8 @@
     button.addEventListener("click", updatePricing);
   });
 
-  tabMenu?.addEventListener("click", updatePricing);
+  // Removed tab menu event listener as we no longer use tabs
+  // tabMenu?.addEventListener("click", updatePricing);
   planRadioButtons.forEach((radioButton) => {
     radioButton.addEventListener("change", updatePricing);
   });
@@ -315,6 +317,7 @@
       throw new Error("no selected plan card wrapper");
 
     let hardwarePriceHaas = calculateHardwarePrice(section2, "haas") * quantity;
+    // Still calculate cash price for internal use, but we won't display it
     let hardwarePriceCash = calculateHardwarePrice(section2, "cash") * quantity;
     let softwareCost = getPlanDetails(
       selectedPlanCardWrapper
@@ -324,15 +327,20 @@
     let totalHaas = softwareCost + hardwarePriceHaas;
     let totalCash = softwareCost + hardwarePriceCash;
 
+    // Keep both checks to maintain existing business rules
     if (totalHaas > 15000 || totalCash > 15000) {
       showError("quantity");
       return;
     }
 
-    cashUpfrontCost.innerText = formatCurrency(hardwarePriceCash);
-    cashRecurringAnnualCost.innerText = formatCurrency(softwareCost);
-    cashYear1Total.innerText = formatCurrency(softwareCost + hardwarePriceCash);
-    cashTotalCost.innerText = formatCurrency(softwareCost + hardwarePriceCash);
+    // Hide cash/upfront elements by setting them to empty strings
+    // We keep these lines to avoid breaking the code, but they won't be visible in UI
+    cashUpfrontCost.innerText = "";
+    cashRecurringAnnualCost.innerText = "";
+    cashYear1Total.innerText = "";
+    cashTotalCost.innerText = "";
+    
+    // Only show HaaS pricing as per client request
     haasRecurringAnnualCost.innerText = formatCurrency(
       softwareCost + hardwarePriceHaas
     );
@@ -371,10 +379,13 @@
   }
 
   function hidePricing() {
+    // Hide cash/upfront elements by setting them to empty strings
     cashUpfrontCost.innerText = "";
     cashRecurringAnnualCost.innerText = "";
     cashYear1Total.innerText = "";
     cashTotalCost.innerText = "";
+    
+    // Only reset HaaS pricing elements
     haasRecurringAnnualCost.innerText = "";
     haasTotalCost.innerText = "";
   }
@@ -416,3 +427,4 @@
     submitButton.classList.remove("disabled");
   }
 })();
+//Tab structure changed - HaaS only keep
