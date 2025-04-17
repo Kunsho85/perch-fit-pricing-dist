@@ -2,7 +2,7 @@
 
 This is the documentation for the Perch Pricing Calculator. The calculator allows users to configure their Perch hardware and subscription options to get accurate pricing information.
 
-## Version 2.3 Update (April 17, 2025)
+## Version 2.3 Update (April 18, 2025)
 
 In this update, we've removed the tab structure and now only display the "Hardware as a Service" (HaaS) pricing option. The "Upfront Purchase" option has been removed from the UI as per client request, while maintaining all existing calculation rules and business logic.
 
