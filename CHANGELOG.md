@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## UPDATE V2.3 (April 18, 2025)
+## UPDATE V2.3 (April 17, 2025)
 - Removed tab structure dependency
 - Modified UI to display only Hardware as a Service (HaaS) option
 - Removed Upfront Purchase option from UI as per client request
