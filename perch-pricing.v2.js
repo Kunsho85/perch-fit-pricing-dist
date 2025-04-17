@@ -1,4 +1,4 @@
-// SCRIPT VERSION 2.3 // 
+// SCRIPT VERSION 2.3.1 // 
 // LAST UDPATE 17th of April 2025 //
 
 "use strict";
@@ -48,99 +48,173 @@
       getElement(planCardWrapper, "[pp='plan-name']")?.innerText.trim() || "";
     if (!planName) throw new Error("could not find plan name");
 
-    let priceByQuantity = new Map();
-    getElements(planCardWrapper, "[data-pp-quantity]").forEach((element) => {
-      let quantity = Number(element.getAttribute("data-pp-quantity"));
-      let price = Number(element.getAttribute("data-pp-price"));
-      priceByQuantity.set(quantity, price);
+    let priceByQuantity = {};
+    let priceElements = getElements(
+      planCardWrapper,
+      "[data-pp-quantity][data-pp-price]"
+    );
+    priceElements.forEach((element) => {
+      let quantity = parseInt(element.getAttribute("data-pp-quantity"));
+      let price = parseInt(element.getAttribute("data-pp-price"));
+      if (!isNaN(quantity) && !isNaN(price)) {
+        priceByQuantity[quantity] = price;
+      }
     });
 
     return { planName, priceByQuantity };
   }
 
-  // Function to calculate the total price of the selected hardware items
-  function calculateHardwarePrice(element, priceType) {
-    return getElements(element, "[pp='hardware-item']")
-      .filter((item) => {
-        let checkbox = item.querySelector("input[type='checkbox']");
-        return checkbox ? checkbox.checked : false;
-      })
-      .reduce((total, item) => {
-        let priceText =
-          getElement(
-            item,
-            priceType === "cash"
-              ? "[pp='hardware-price-cash']"
-              : "[pp='hardware-price-haas']"
-          )?.innerText.trim() || "";
-        let price = Number(
-          removePrefix(priceText, "$").trim().replace(/,/g, "")
-        );
-        return total + price;
-      }, 0);
+  // Function to get the price for the given quantity from the given price by quantity object
+  function getPriceByQuantity(priceByQuantity, quantity) {
+    let quantities = Object.keys(priceByQuantity)
+      .map((q) => parseInt(q))
+      .sort((a, b) => a - b);
+    let price = 0;
+
+    for (let i = 0; i < quantities.length; i++) {
+      if (quantity <= quantities[i]) {
+        price = priceByQuantity[quantities[i]];
+        break;
+      }
+    }
+
+    return price;
   }
 
+  // Function to show the error tooltip for the given error type
+  function showError(errorType) {
+    if (errorType === "quantity") {
+      customPricingTooltipsQuantity.forEach(
+        (tooltip) => (tooltip.style.display = "block")
+      );
+      customPricingTooltipsPlan.forEach(
+        (tooltip) => (tooltip.style.display = "none")
+      );
+    } else if (errorType === "plan") {
+      customPricingTooltipsQuantity.forEach(
+        (tooltip) => (tooltip.style.display = "none")
+      );
+      customPricingTooltipsPlan.forEach(
+        (tooltip) => (tooltip.style.display = "block")
+      );
+    }
+
+    customPricingTags.forEach((tag) => (tag.style.display = "block"));
+    hidePricing();
+  }
+
+  // Function to hide the error tooltips
+  function hideError() {
+    customPricingTooltipsQuantity.forEach(
+      (tooltip) => (tooltip.style.display = "none")
+    );
+    customPricingTooltipsPlan.forEach(
+      (tooltip) => (tooltip.style.display = "none")
+    );
+    customPricingTags.forEach((tag) => (tag.style.display = "none"));
+  }
+
+  // Function to scroll to the pricing section
+  function scrollToPricing() {
+    let element = document.getElementById("quote");
+    element.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  // Constants
+  const ATTRIBUTE_KEY = "pp";
   const PROFESSIONAL_PLAN = "Professional";
-  const MAX_QUANTITY = 10;
-  const DEFAULT_COUNTRY = "United States (US)";
+  const CHAMPIONSHIP_PLAN = "Championship";
+  const HIGHLIGHT_CLASS = "cc-active";
+  const DEFAULT_COUNTRY = "United States";
   const SELECTION_NULL = "selection-null";
-  const PREFIX = "pp";
-  const HIGHLIGHT_CLASS = "cc-highlighted";
-  const select = (selector) => `[${PREFIX}='${selector}']`;
-  const section1 = getElement(document.body, select("section-1"));
-  const section2 = getElement(document.body, select("section-2"));
-  const preloader = getElement(document.body, select("preloader"));
-  const quantityCounter = getElement(document.body, select("quantity-counter"));
-  const quantityButtons = getElements(
-    section2,
+
+  // Helper function to create an attribute selector
+  const select = (attributeValue) => `[${ATTRIBUTE_KEY}='${attributeValue}']`;
+
+  // Get the sections
+  const section1 = document.querySelector(select("section-1"));
+  const section2 = document.querySelector(select("section-2"));
+  if (!section1 || !section2) return;
+
+  // Get the preloader
+  const preloader = document.querySelector(select("preloader"));
+  if (!preloader) return;
+
+  // Get the email source and target
+  const emailSource = document.querySelector(select("email-source"));
+  const emailTarget = document.querySelector(select("email-target"));
+  if (!emailSource || !emailTarget) return;
+
+  // Get the country and state selects
+  const countrySelect = document.querySelector(select("country-select"));
+  const usStateSelect = document.querySelector(select("us-state-select"));
+  if (!countrySelect || !usStateSelect) return;
+
+  // Get the perch use select
+  const perchUseSelect = getElement(section1, select("use-select"));
+  if (!perchUseSelect) return;
+
+  // Get the quantity counter and buttons
+  const quantityCounter = document.querySelector(select("quantity-counter"));
+  const quantityButtons = document.querySelectorAll(
     select("quantity-counter-button")
   );
-  const quantityDisplays = getElements(section2, select("quantity-display"));
-  const selectedPlanDisplays = getElements(
-    section2,
+  const quantityDisplays = document.querySelectorAll(select("quantity-display"));
+  if (!quantityCounter) return;
+
+  // Get the plan card wrappers and radio buttons
+  const planCardWrappers = document.querySelectorAll(select("plan-card-wrapper"));
+  const planRadioButtons = document.querySelectorAll(
+    "input[type='radio'][name='desired_subscription_plans']"
+  );
+  const selectedPlanDisplays = document.querySelectorAll(
     select("selected-plan-display")
   );
-  const planCardWrappers = getElements(section2, select("plan-card-wrapper"));
-  const planRadioButtons = planCardWrappers.flatMap((wrapper) =>
-    getElements(wrapper, "input[type='radio']")
-  );
-  const emailSource = getElement(section1, select("email-source"));
-  const emailTarget = getElement(section2, select("email-target"));
+
+  // Get the pricing quote tabs
   const pricingQuoteTabs = getElement(section2, select("pricing-quote-tabs"));
-  // Removed tab menu reference as we no longer use tabs
-  // const tabMenu = pricingQuoteTabs.querySelector(".w-tab-menu");
-  const cashUpfrontCost = section2.querySelector(select("cash-upfront-cost"));
-  const cashRecurringAnnualCost = section2.querySelector(
-    select("cash-recurring-annual-cost")
-  );
-  const cashYear1Total = section2.querySelector(select("cash-year-1-total"));
-  const cashTotalCost = section2.querySelector(select("grand-total-cost-cash"));
-  const haasRecurringAnnualCost = section2.querySelector(
+  // We no longer need the tab menu reference since we're removing tab structure dependency
+  // const tabMenu = pricingQuoteTabs ? pricingQuoteTabs.querySelector(".w-tab-menu") : null;
+
+  // Get the cost summary wrappers
+  const costSummaryWraps = document.querySelectorAll(select("cost-summary-wrap"));
+
+  // Get the pricing elements
+  const haasRecurringAnnualCost = document.querySelector(
     select("haas-recurring-annual-cost")
   );
-  const haasTotalCost = section2.querySelector(select("grand-total-cost-haas"));
-  const customPricingTags = document.querySelectorAll(
-    '[pp="custom-pricing-tag"]'
+  const haasTotalCost = document.querySelector(select("grand-total-cost-haas"));
+  const cashUpfrontCost = document.querySelector(select("cash-upfront-cost"));
+  const cashRecurringAnnualCost = document.querySelector(
+    select("cash-recurring-annual-cost")
   );
-  const costSummaryWraps = getElements(section2, select("cost-summary-wrap"));
-  const customPricingTooltipsQuantity = document.querySelectorAll(
-    '[pp="custom-pricing-tooltip-quantity"]'
-  );
-  customPricingTooltipsQuantity.forEach((element) => {
-    element.style.display = "none";
-  });
-  const customPricingTooltipsPlan = document.querySelectorAll(
-    '[pp="custom-pricing-tooltip-plan"'
-  );
-  const countrySelect = getElement(section1, select("country-select"));
-  const usStateSelect = getElement(section1, select("us-state-select"));
-  const perchUseSelect = getElement(section1, select("use-select"));
-  console.log(perchUseSelect);
+  const cashYear1Total = document.querySelector(select("cash-year-1-total"));
+  const cashTotalCost = document.querySelector(select("grand-total-cost-cash"));
 
-  countrySelect.value = DEFAULT_COUNTRY;
-  usStateSelect.value = "Alabama";
+  // Get the custom pricing elements
+  const customPricingTags = document.querySelectorAll(select("custom-pricing-tag"));
+  const customPricingTooltipsQuantity = document.querySelectorAll(
+    select("custom-pricing-tooltip-quantity")
+  );
+  const customPricingTooltipsPlan = document.querySelectorAll(
+    select("custom-pricing-tooltip-plan")
+  );
+
+  // Hide the custom pricing tooltips initially
+  customPricingTooltipsQuantity.forEach(
+    (tooltip) => (tooltip.style.display = "none")
+  );
+  customPricingTooltipsPlan.forEach(
+    (tooltip) => (tooltip.style.display = "none")
+  );
+
+  // Set the default state of the submit button to disabled
   disableSubmitButton();
 
+  // Set the default value of the US state select to Alabama
+  usStateSelect.value = "Alabama";
+
+  // Add event listeners
   countrySelect.addEventListener("change", () => {
     countrySelect.value === DEFAULT_COUNTRY
       ? (usStateSelect.style.display = "block")
@@ -163,37 +237,22 @@
       countrySelect.value === DEFAULT_COUNTRY &&
       usStateSelect.value == SELECTION_NULL
     ) {
-      disableNextButton();
+      disableNextButton(1);
     } else if (
       countrySelect.value === DEFAULT_COUNTRY &&
       usStateSelect.value != SELECTION_NULL
     ) {
-      enableNextButton();
+      enableNextButton(1);
     }
   });
 
   perchUseSelect.addEventListener("change", () => {
     if (perchUseSelect.value === SELECTION_NULL) {
-      disableSubmitButton();
+      disableSubmitButton(1);
     } else {
-      enableSubmitButton();
+      enableSubmitButton(1);
     }
   });
-
-  getElements(section2, "[fs-accordion-element='content']").forEach(
-    async (content) => {
-      await delay(500);
-      let group = content.closest("[fs-accordion-element='group']");
-      let active = group?.getAttribute("fs-accordion-active");
-      if (active && content.classList.contains(active)) {
-        content.style.maxHeight = "none";
-      }
-    }
-  );
-
-  if (!location.search.includes("show-both-forms")) {
-    section2.style.display = "none";
-  }
 
   section1.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -283,13 +342,17 @@
     button.addEventListener("click", updatePricing);
   });
 
-  // Removed tab menu event listener as we no longer use tabs
-  // tabMenu?.addEventListener("click", updatePricing);
+  // We no longer need the tab menu event listener since we're removing tab structure dependency
+  // if (tabMenu) {
+  //   tabMenu.addEventListener("click", updatePricing);
+  // }
+  
   planRadioButtons.forEach((radioButton) => {
     radioButton.addEventListener("change", updatePricing);
   });
 
   function updatePricing() {
+    // Check if pricingQuoteTabs exists before proceeding
     if (!pricingQuoteTabs) return;
 
     let selectedPlan = getCheckedRadioValue(
@@ -302,129 +365,132 @@
       return;
     }
 
-    let quantity = Number(quantityDisplays[0].innerText);
-    if (quantity > MAX_QUANTITY) {
+    let quantity = parseInt(quantityCounter.value);
+    let selectedPlanCardWrapper = Array.from(planCardWrappers).find(
+      (wrapper) => {
+        let radioButton = wrapper.querySelector(
+          "input[type='radio'][name='desired_subscription_plans']"
+        );
+        return radioButton && radioButton.checked;
+      }
+    );
+
+    if (!selectedPlanCardWrapper) return;
+
+    let { planName, priceByQuantity } = getPlanDetails(selectedPlanCardWrapper);
+    let softwareCost = getPriceByQuantity(priceByQuantity, quantity) * quantity;
+
+    let hardwarePriceHaas = 0;
+    let hardwarePriceCash = 0;
+
+    getElements(section2, select("hardware-item")).forEach((hardwareItem) => {
+      let toggleButton = hardwareItem.querySelector(".c-toggle__button");
+      if (toggleButton && toggleButton.checked) {
+        let haasPrice = parseFloat(
+          removePrefix(
+            getElement(hardwareItem, select("hardware-price-haas"))?.innerText ||
+              "0",
+            "$"
+          ).replace(/,/g, "")
+        );
+        let cashPrice = parseFloat(
+          removePrefix(
+            getElement(hardwareItem, select("hardware-price-cash"))?.innerText ||
+              "0",
+            "$"
+          ).replace(/,/g, "")
+        );
+
+        hardwarePriceHaas += haasPrice * quantity;
+        hardwarePriceCash += cashPrice * quantity;
+      }
+    });
+
+    let totalHaas = softwareCost + hardwarePriceHaas;
+    let totalCash = softwareCost + hardwarePriceCash;
+
+    if (totalHaas > 15000) {
       showError("quantity");
       return;
     }
 
     hideError();
 
-    let selectedPlanCardWrapper = document
-      .querySelector(`input[type='radio'][value='${selectedPlan}']`)
-      .closest(select("plan-card-wrapper"));
-    if (!selectedPlanCardWrapper)
-      throw new Error("no selected plan card wrapper");
-
-    let hardwarePriceHaas = calculateHardwarePrice(section2, "haas") * quantity;
-    // Still calculate cash price for internal use, but we won't display it
-    let hardwarePriceCash = calculateHardwarePrice(section2, "cash") * quantity;
-    let softwareCost = getPlanDetails(
-      selectedPlanCardWrapper
-    ).priceByQuantity.get(quantity);
-    if (!softwareCost) throw new Error("no software cost found");
-
-    let totalHaas = softwareCost + hardwarePriceHaas;
-    let totalCash = softwareCost + hardwarePriceCash;
-
-    // Keep both checks to maintain existing business rules
-    if (totalHaas > 15000 || totalCash > 15000) {
-      showError("quantity");
-      return;
+    // Update the pricing text
+    if (haasRecurringAnnualCost) {
+      haasRecurringAnnualCost.innerText = formatCurrency(softwareCost);
     }
-
-    // Hide cash/upfront elements by setting them to empty strings
-    // We keep these lines to avoid breaking the code, but they won't be visible in UI
-    cashUpfrontCost.innerText = "";
-    cashRecurringAnnualCost.innerText = "";
-    cashYear1Total.innerText = "";
-    cashTotalCost.innerText = "";
     
-    // Only show HaaS pricing as per client request
-    haasRecurringAnnualCost.innerText = formatCurrency(
-      softwareCost + hardwarePriceHaas
-    );
-    haasTotalCost.innerText = formatCurrency(softwareCost + hardwarePriceHaas);
-  }
-
-  function showError(type) {
-    costSummaryWraps.forEach((wrap) => (wrap.style.display = "none"));
-    customPricingTags.forEach((element) => {
-      element.style.display = "flex";
-    });
-    hidePricing();
-
-    if (type === "plan") {
-      customPricingTooltipsPlan.forEach((element) => {
-        element.style.display = "block";
-      });
-      customPricingTooltipsQuantity.forEach((element) => {
-        element.style.display = "none";
-      });
-    } else if (type === "quantity") {
-      customPricingTooltipsPlan.forEach((element) => {
-        element.style.display = "none";
-      });
-      customPricingTooltipsQuantity.forEach((element) => {
-        element.style.display = "block";
-      });
+    if (haasTotalCost) {
+      haasTotalCost.innerText = formatCurrency(totalHaas);
+    }
+    
+    // Even though we're focusing on HaaS, we still update cash values if the elements exist
+    // This ensures backward compatibility with existing HTML structure
+    if (cashUpfrontCost) {
+      cashUpfrontCost.innerText = formatCurrency(hardwarePriceCash);
+    }
+    
+    if (cashRecurringAnnualCost) {
+      cashRecurringAnnualCost.innerText = formatCurrency(softwareCost);
+    }
+    
+    if (cashYear1Total) {
+      cashYear1Total.innerText = formatCurrency(totalCash);
+    }
+    
+    if (cashTotalCost) {
+      cashTotalCost.innerText = formatCurrency(totalCash);
     }
   }
 
-  function hideError() {
-    costSummaryWraps.forEach((wrap) => (wrap.style.display = "block"));
-    customPricingTags.forEach((element) => {
-      element.style.display = "none";
-    });
-  }
-
+  // Function to hide pricing
   function hidePricing() {
-    // Hide cash/upfront elements by setting them to empty strings
-    cashUpfrontCost.innerText = "";
-    cashRecurringAnnualCost.innerText = "";
-    cashYear1Total.innerText = "";
-    cashTotalCost.innerText = "";
-    
-    // Only reset HaaS pricing elements
-    haasRecurringAnnualCost.innerText = "";
-    haasTotalCost.innerText = "";
+    // Only update elements that exist to avoid errors
+    if (cashUpfrontCost) cashUpfrontCost.innerText = "";
+    if (cashRecurringAnnualCost) cashRecurringAnnualCost.innerText = "";
+    if (cashYear1Total) cashYear1Total.innerText = "";
+    if (cashTotalCost) cashTotalCost.innerText = "";
+    if (haasRecurringAnnualCost) haasRecurringAnnualCost.innerText = "";
+    if (haasTotalCost) haasTotalCost.innerText = "";
   }
 
-  function scrollToPricing() {
-    let element = document.getElementById("quote");
-    element.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
-
+  // Functions to enable/disable buttons
   function disableNextButton(step) {
-    let nextButton = document.querySelectorAll('button[data-form="next-btn"]')[
-      step
-    ];
-    nextButton.style.pointerEvents = "none";
-    nextButton.style.opacity = "0.5";
-    nextButton.classList.add("disabled");
+    let nextButtons = document.querySelectorAll('button[data-form="next-btn"]');
+    if (nextButtons.length > step) {
+      let nextButton = nextButtons[step];
+      nextButton.style.pointerEvents = "none";
+      nextButton.style.opacity = "0.5";
+      nextButton.classList.add("disabled");
+    }
   }
 
   function enableNextButton(step) {
-    let nextButton = document.querySelectorAll('button[data-form="next-btn"]')[
-      step
-    ];
-    nextButton.style.pointerEvents = "auto";
-    nextButton.style.opacity = "1";
-    nextButton.classList.remove("disabled");
+    let nextButtons = document.querySelectorAll('button[data-form="next-btn"]');
+    if (nextButtons.length > step) {
+      let nextButton = nextButtons[step];
+      nextButton.style.pointerEvents = "auto";
+      nextButton.style.opacity = "1";
+      nextButton.classList.remove("disabled");
+    }
   }
 
   function disableSubmitButton() {
     let submitButton = document.querySelector('[data-submit="true"]');
-    submitButton.style.pointerEvents = "none";
-    submitButton.style.opacity = "0.5";
-    submitButton.classList.add("disabled");
+    if (submitButton) {
+      submitButton.style.pointerEvents = "none";
+      submitButton.style.opacity = "0.5";
+      submitButton.classList.add("disabled");
+    }
   }
 
   function enableSubmitButton() {
     let submitButton = document.querySelector('[data-submit="true"]');
-    submitButton.style.pointerEvents = "auto";
-    submitButton.style.opacity = "1";
-    submitButton.classList.remove("disabled");
+    if (submitButton) {
+      submitButton.style.pointerEvents = "auto";
+      submitButton.style.opacity = "1";
+      submitButton.classList.remove("disabled");
+    }
   }
 })();
-//Tab structure changed - HaaS only keep
