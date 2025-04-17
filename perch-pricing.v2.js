@@ -253,7 +253,7 @@
     select("haas-recurring-annual-cost")
   );
   const haasTotalCost = document.querySelector(select("grand-total-cost-haas"));
-  const cashUpfrontCost = document.querySelector(select("cash-upfront-cost"));
+  //const cashUpfrontCost = document.querySelector(select("cash-upfront-cost"));
   const cashRecurringAnnualCost = document.querySelector(
     select("cash-recurring-annual-cost")
   );
@@ -263,7 +263,7 @@
   debugLog("Pricing elements found:", 
     "haasRecurringAnnualCost:", !!haasRecurringAnnualCost, 
     "haasTotalCost:", !!haasTotalCost,
-    "cashUpfrontCost:", !!cashUpfrontCost,
+    //"cashUpfrontCost:", !!cashUpfrontCost,
     "cashRecurringAnnualCost:", !!cashRecurringAnnualCost,
     "cashYear1Total:", !!cashYear1Total,
     "cashTotalCost:", !!cashTotalCost
@@ -575,10 +575,10 @@
     
     // Even though we're focusing on HaaS, we still update cash values if the elements exist
     // This ensures backward compatibility with existing HTML structure
-    if (cashUpfrontCost) {
-      debugLog("Updating cashUpfrontCost to:", formatCurrency(hardwarePriceCash));
-      cashUpfrontCost.innerText = formatCurrency(hardwarePriceCash);
-    }
+    //if (cashUpfrontCost) {
+      //debugLog("Updating cashUpfrontCost to:", formatCurrency(hardwarePriceCash));
+      //cashUpfrontCost.innerText = formatCurrency(hardwarePriceCash);
+    //}
     
     if (cashRecurringAnnualCost) {
       debugLog("Updating cashRecurringAnnualCost to:", formatCurrency(softwareCost));
@@ -603,7 +603,7 @@
     debugLog("Hiding pricing");
     
     // Only update elements that exist to avoid errors
-    if (cashUpfrontCost) cashUpfrontCost.innerText = "";
+    //if (cashUpfrontCost) cashUpfrontCost.innerText = "";
     if (cashRecurringAnnualCost) cashRecurringAnnualCost.innerText = "";
     if (cashYear1Total) cashYear1Total.innerText = "";
     if (cashTotalCost) cashTotalCost.innerText = "";
