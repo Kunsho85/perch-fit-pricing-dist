@@ -1,67 +1,61 @@
-# UPDATE V2.2
-# Patch active label for hardware item selection
+# CHANGELOG
 
-#### To set active class when button is selected in hardwareToggleButtons forEach loop
-```js
+## UPDATE V2.3 (April 18, 2025)
+- Removed tab structure dependency
+- Modified UI to display only Hardware as a Service (HaaS) option
+- Removed Upfront Purchase option from UI as per client request
+- Preserved all existing calculation rules and business logic
+- Maintained custom pricing tooltips for different scenarios
+
+### Key code changes:
+- Removed tab menu references and event listeners
+- Modified `updatePricing()` function to only display HaaS pricing
+- Updated `hidePricing()` function to align with new structure
+- Maintained internal calculations for both pricing options to preserve business rules
+
+## UPDATE V2.2
+- Patched active label for hardware item selection
+- Added functionality to set active class when button is selected in hardwareToggleButtons forEach loop:
+```javascript
 let hardwareNameWrapper = hardwareItem.querySelector(".c-toggle__text");
 button.checked
   ? hardwareNameWrapper.classList.add("cc-active")
   : hardwareNameWrapper.classList.remove("cc-active");
 ```
 
-# UPDATE V2.1
-# Adding possibility to disable or enable next/submit depending on select input values
+## UPDATE V2.1
+- Added possibility to disable or enable next/submit buttons depending on select input values
+- Added support for "required" attribute of country and state select fields
 
-Because the initial version of the script doesn't take into account the "required" attribute of country and state select.
+### New constants and functions:
+- Added `SELECTION_NULL` to store the default value of all input select
+- Added `perchUseSelect` to store the DOM element of the "use-perch" select input at the last step
+- Set default value of US State to Alabama: `usStateSelect.value = "Alabama";`
+- Set default state of submit button to disable: `disableSubmitButton();`
 
-## Initiate new consts and functions
-
-#### To store the default value of all input select
-```js
-const SELECTION_NULL = "selection-null";
-```
-
-#### To store the DOM element of the "use-perch" select input at the last step
-```js
-const perchUseSelect = getElement(section1, select("use-select"));
-```
-
-#### To set default value of us State to Alabama
-```js 
-usStateSelect.value = "Alabama";
-```
-
-#### To set default state of submit button to disable
-```js
-disableSubmitButton();
-```
-
-#### To change states of next and submit buttons
-```js
+### Added functions to change states of next and submit buttons:
+```javascript
 function disableNextButton(step) {
   let nextButton = document.querySelectorAll('button[data-form="next-btn"]')[step];
   nextButton.style.pointerEvents = "none";
   nextButton.style.opacity = "0.5";
   nextButton.classList.add("disabled");
 }
-```
-```js
+
 function enableNextButton(step) {
   let nextButton = document.querySelectorAll('button[data-form="next-btn"]')[step];
   nextButton.style.pointerEvents = "auto";
   nextButton.style.opacity = "1";
   nextButton.classList.remove("disabled");
 }
-```
-```js
+
 function disableSubmitButton(){
   let submitButton = document.querySelector('[data-submit="true"]');
   submitButton.style.pointerEvents = "none";
   submitButton.style.opacity = "0.5";
   submitButton.classList.add("disabled");
 }
-```
-```js
+
 function enableSubmitButton(){
   let submitButton = document.querySelector('[data-submit="true"]');
   submitButton.style.pointerEvents = "auto";
@@ -70,16 +64,14 @@ function enableSubmitButton(){
 }
 ```
 
-## Updated events listeners
-
-#### Of country select
-```js
+### Updated event listeners:
+- Country select:
+```javascript
 countrySelect.addEventListener("change", () => {
   countrySelect.value === DEFAULT_COUNTRY
     ? (usStateSelect.style.display = "block")
     : (usStateSelect.style.display = "none");
 
-  /// NEW
   if (countrySelect.value == SELECTION_NULL) {
     disableNextButton(1);
   }
@@ -89,12 +81,11 @@ countrySelect.addEventListener("change", () => {
   else {
     enableNextButton(1);
   }
-  /// NEW
 });
 ```
 
-#### Added event listener to US State select
-```js
+- US State select:
+```javascript
 usStateSelect.addEventListener("change", () => {
   if (countrySelect.value === DEFAULT_COUNTRY && usStateSelect.value == SELECTION_NULL) {
     disableNextButton(1);
@@ -104,8 +95,9 @@ usStateSelect.addEventListener("change", () => {
   }
 });
 ```
-#### Added event listener to Perch use select
-```js
+
+- Perch use select:
+```javascript
 perchUseSelect.addEventListener("change", () => {
   if (perchUseSelect.value === SELECTION_NULL){
     disableSubmitButton(1);
@@ -116,67 +108,41 @@ perchUseSelect.addEventListener("change", () => {
 });
 ```
 
-# UPDATE V2
-# Erased useless const and functions
+## UPDATE V2
+- Replaced tab system with grid system for pricing results display
+- Removed useless constants and functions related to the old tab system
 
-Because the update on the webflow project involved the use of a grid system instead of webflow's tab to display pricing results. All functions and const based on this system has been erased.
+### Script formats:
+- `perch-pricing.v2.js`: Non-minified/obfuscated but commented code to help future development
+- `perch-pricing.v2.min.js`: Minified and obfuscated publishable code for jsdelivr
 
-## The script is available under two format
-- #### perch-pricing.v2.js
-Which contain the non minified/obfuscated but commented code to help future works on it if necessary. 
-- #### perch-pricing.v2.min.js
-Which contain the publishable code that has been minified and obfuscated. The one to publish on jsdelivr so.
+### Changes:
+- Replaced `grand-total-cost` attribute with:
+  - `grand-total-cost-haas`
+  - `grand-total-cost-cash`
 
-#### grand-total-cost attribute died giving birth to
-- grand-total-cost-haas
-- grand-total-cost-cash
-
-#### Erased :
-```js
+### Removed:
+```javascript
 const grandTotalCost = section2.querySelector(select("grand-total-cost"));
-```
-```js
 const customPricingTooltipQuantity = section2.querySelector(select("custom-pricing-tooltip-quantity"));
 const customPricingTooltipPlan = section2.querySelector(select("custom-pricing-tooltip-plan"));
-```
-```js
 function getActiveTab(element) {
   let activeTab = getElements(element, "[data-w-tab]").find(tab => tab.classList.contains("w--current"));
   return activeTab ? activeTab.getAttribute("data-w-tab").trim() : "";
 }
-```
-```js
 function getActiveTabName(element) {
   return getActiveTab(element).toLowerCase();
 }
 ```
 
-## Initiate new const and functions
-Created new functions to match new grid-system
+### New constants and functions:
+- Added `cashTotalCost` to store the total cost of upfront payment
+- Added `haasTotalCost` to store the total cost of HaaS pricing
+- Added `customPricingTooltipsQuantity` to store all tooltips about quantity error
+- Added `customPricingTooltipsPlan` to store all tooltips about plan error
 
-#### To store the total cost of upfront payment
-```js
-const cashTotalCost = section2.querySelector(select("grand-total-cost-cash"));
-```
-
-#### To store the total cost of haas pricing
-```js
-const haasTotalCost = section2.querySelector(select("grand-total-cost-haas"));
-```
-
-#### To store all tooltips element about quantity error and hiding it when page finish loading
-```js
-const customPricingTooltipsQuantity = document.querySelectorAll('[pp="custom-pricing-tooltip-quantity"]');
-customPricingTooltipsQuantity.forEach(element=>{element.style.display = "none"});
-```
-
-#### To store all tooltips element about plan error
-```js
-const customPricingTooltipsPlan = document.querySelectorAll('[pp="custom-pricing-tooltip-plan"');
-```
-
-#### To hide the pricing text because the standar plan is not selected by default. Function called when form has been submited
-```js
+### New functions:
+```javascript
 function hidePricing(){
   cashUpfrontCost.innerText = "";
   cashRecurringAnnualCost.innerText = "";
@@ -185,35 +151,27 @@ function hidePricing(){
   haasRecurringAnnualCost.innerText = "";
   haasTotalCost.innerText = "";
 }
-```
 
-#### Function to scroll to the pricing grid. Function called in selectedPlan click trigger
-```js
-function scrollToPricing()
-{
+function scrollToPricing() {
   let element = document.getElementById("quote");
   element.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 ```
 
-## Updated "updatePricing()" function
-
-
-#### Erased 
-```js
+### Updated "updatePricing()" function:
+Replaced:
+```javascript
 let grandTotal = activeTab === "haas" ? totalHaas : totalCash;
 
 if (grandTotal > 15000) {
   showError("quantity");
   return;
 }
-```
-```js
 grandTotalCost.innerText = formatCurrency(grandTotal);
 ```
 
-#### To update the pricing text inside of pricing tabs
-```js
+With:
+```javascript
 cashTotalCost.innerText = formatCurrency(softwareCost + hardwarePriceCash);
 haasTotalCost.innerText = formatCurrency(softwareCost + hardwarePriceHaas);
 ```
