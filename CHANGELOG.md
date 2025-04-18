@@ -1,6 +1,77 @@
 # CHANGELOG
 
-## UPDATE V2.3 (April 17, 2025)
+## UPDATE V2.3.4 (April 18, 2025)
+- Fixed tier card selection to ensure only the selected plan (Professional by default) is highlighted
+- Improved custom pricing tag display by changing from `display: block` to `display: flex` for better layout
+- Added null checks for DOM elements to prevent console errors
+- Fixed FAQ script error that was causing console issues
+
+### Key code changes:
+- Modified `highlightPlanCard` function to properly handle tier card selection:
+```javascript
+function highlightPlanCard(planCardWrapper) {
+  // First, reset all selection tags on all plan cards
+  planCardWrappers.forEach((wrapper) => {
+    // Find the selection tag in this wrapper
+    const selectTag = wrapper.querySelector('.pricing_tier_select_tag');
+    if (selectTag) {
+      // Remove both highlight and active classes
+      selectTag.classList.remove(HIGHLIGHT_CLASS, ACTIVE_CLASS);
+    }
+    
+    // Also reset other elements that might have highlight classes
+    wrapper.querySelectorAll('.pricing_tier_top, .pricing_tier_middle, .pricing_tier_bottom').forEach(element => {
+      element.classList.remove(HIGHLIGHT_CLASS, ACTIVE_CLASS);
+    });
+  });
+
+  // Now highlight only the selected plan card's selection tag
+  const selectedSelectTag = planCardWrapper.querySelector('.pricing_tier_select_tag');
+  if (selectedSelectTag) {
+    // Add both highlight and active classes to the selected card's tag
+    selectedSelectTag.classList.add(HIGHLIGHT_CLASS, ACTIVE_CLASS);
+  }
+  
+  // Also highlight other elements in the selected card if needed
+  planCardWrapper.querySelectorAll('.pricing_tier_top, .pricing_tier_middle, .pricing_tier_bottom').forEach(element => {
+    element.classList.add(HIGHLIGHT_CLASS, ACTIVE_CLASS);
+  });
+}
+```
+
+- Updated custom pricing tag display in the `showError` function:
+```javascript
+function showError(type) {
+  costSummaryWraps.forEach((wrap) => (wrap.style.display = "none"));
+  customPricingTags.forEach((element) => {
+    element.style.display = "flex"; // Changed from "block" to "flex"
+  });
+  // Rest of the function remains the same
+}
+```
+
+- Added null checks for DOM elements throughout the code
+- Added fix for FAQ script error:
+```javascript
+document.addEventListener("DOMContentLoaded", () => {
+  // Get all FAQ containers
+  const faqContainers = document.querySelectorAll('.faq_wrap');
+  if (faqContainers.length === 0) return; // Exit if no FAQ containers
+  
+  faqContainers.forEach(faqContainer => {
+    const faqItems = faqContainer.querySelectorAll('.faq_item');
+    if (faqItems.length > 0) {
+      let firstFaqItem = faqItems[0];
+      const radioButton = firstFaqItem.querySelector('input[type="radio"]');
+      if (radioButton) {
+        radioButton.checked = true;
+      }
+    }
+  });
+});
+```
+
+## UPDATE V2.3 (April 12, 2025)
 - Removed tab structure dependency
 - Modified UI to display only Hardware as a Service (HaaS) option
 - Removed Upfront Purchase option from UI as per client request
