@@ -2,7 +2,17 @@
 
 This is the documentation for the Perch Pricing Calculator. The calculator allows users to configure their Perch hardware and subscription options to get accurate pricing information.
 
-## Version 2.3 Update (April 17, 2025)
+## Version 2.3.4 Update (April 18, 2025)
+
+In this update, we've fixed issues with tier card selection and custom pricing tag display:
+
+### Key Changes:
+- Fixed tier card selection to ensure only the selected plan (Professional by default) is highlighted
+- Improved custom pricing tag display by changing from `display: block` to `display: flex` for better layout
+- Added null checks for DOM elements to prevent console errors
+- Fixed FAQ script error that was causing console issues
+
+## Version 2.3 Update (April 12, 2025)
 
 In this update, we've removed the tab structure and now only display the "Hardware as a Service" (HaaS) pricing option. The "Upfront Purchase" option has been removed from the UI as per client request, while maintaining all existing calculation rules and business logic.
 
@@ -102,7 +112,7 @@ This attribute marks the element which displays the name of a pricing plan. This
 This attribute marks all fields, which should display the currently selected plan. (Automatically updates as the plan changes)
 
 `pp='custom-pricing-tag'`
-This attribute marks the element tag which says "CUSTOM PRICING" in the pricing result section.
+This attribute marks the element tag which says "CUSTOM PRICING" in the pricing result section. As of v2.3.4, this uses flex display for better layout.
 
 `pp='custom-pricing-tooltip-plan'`
 This attribute marks the tooltip which is shown when the reason for the custom pricing is, that a custom pricing plan has been selected.
