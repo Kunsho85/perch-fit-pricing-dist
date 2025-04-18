@@ -100,7 +100,7 @@
             })
         }
         customPricingTags.forEach(tag => {
-            if (tag) tag.style.display = "block"
+            if (tag) tag.style.display = "flex"
         });
         hidePricing()
     }
