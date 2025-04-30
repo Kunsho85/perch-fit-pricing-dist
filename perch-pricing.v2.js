@@ -1,5 +1,5 @@
-// SCRIPT VERSION 2.3.4 // 
-// LAST UDPATE 18th of April 2025 //
+// SCRIPT VERSION 2.3.5 // 
+// LAST UDPATE 30th of April 2025 //
 
 "use strict";
 
